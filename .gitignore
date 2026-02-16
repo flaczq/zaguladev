@@ -1,0 +1,27 @@
+# Pliki systemowe
+.DS_Store
+Thumbs.db
+
+# Foldery edytorów i IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Pliki tymczasowe i logi
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Pliki środowiskowe (jeśli używasz)
+.env
+.env.local
+
+# Foldery z artefaktami budowania (jeśli używasz narzędzi jak Parcel/Webpack)
+dist/
+build/
+node_modules/
