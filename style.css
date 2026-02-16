@@ -303,7 +303,7 @@ main {
         order: 3;
     }
 
-    /* Change buttons to single letters below 1025px */
+    /* Change buttons to single letters below 1024px */
     .links {
         flex-direction: row;
         flex-wrap: wrap;
@@ -320,11 +320,11 @@ main {
     }
 
     .full-text {
-        display: none;
+        display: none !important;
     }
 
     .short-text {
-        display: block;
+        display: block !important;
     }
 }
 
