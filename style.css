@@ -302,6 +302,30 @@ main {
     .side-panel.right {
         order: 3;
     }
+
+    /* Change buttons to single letters below 1025px */
+    .links {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    .btn {
+        padding: 15px;
+        min-width: 60px;
+        aspect-ratio: 1/1;
+        border-radius: 14px;
+        font-size: 1.4rem;
+    }
+
+    .full-text {
+        display: none;
+    }
+
+    .short-text {
+        display: block;
+    }
 }
 
 @media (max-width: 480px) {
@@ -317,27 +341,14 @@ main {
     }
 
     .links {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 12px;
+        gap: 10px;
         width: 100%;
     }
 
     .btn {
         padding: 12px;
-        min-width: 70px;
+        min-width: 75px;
         flex: 1 1 calc(50% - 10px);
-        aspect-ratio: 1/1;
-        border-radius: 12px;
-        font-size: 1.5rem;
-    }
-
-    .full-text {
-        display: none;
-    }
-
-    .short-text {
-        display: block;
+        font-size: 1.6rem;
     }
 }
