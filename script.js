@@ -2,80 +2,111 @@ const canvas = document.getElementById('parallax-canvas');
 const ctx = canvas.getContext('2d');
 
 let width, height;
-const fontSize = 16;
+const fontSize = 18;
 const elements = [];
-const explosions = [];
-const elementCount = 30; // Reduced from 60 to prevent too many explosions
+const elementCount = 20; // Increased for more floating quotes
 
-const snippets = [
-    'const app = express();', 'function init() {', 'return await db.query();',
-    'export default Component;', 'margin: 0 auto;', 'display: flex;',
-    'grid-template-columns: 1fr;', 'color: var(--accent);', 'JSON', 'API',
-    'if (user.isAdmin)', 'console.log("Zagula");', 'GIT', '#bug',
-    'window.addEventListener', 'ctx.fillText', 'border-radius: 50%;', 'padding: 20px;'
+const quotes = [
+    'NIE MA LIMITÓW', 'DZIAŁAJ TERAZ', 'TWÓJ CZAS JEST TERAZ',
+    'NIGDY SIĘ NIE PODDAWAJ', 'SKUP SIĘ NA CELU', 'BĄDŹ NIEUSTRASZONY',
+    'DYSCYPLINA TO WOLNOŚĆ', 'ROZWIJAJ SIĘ CODZIENNIE', 'ODWAŻ SIĘ MARZYĆ',
+    'SIŁA JEST W TOBIE', 'PRZEKRACZAJ GRANICE', 'BUDUJ SWOJE IMPERIUM',
+    'KAŻDY KROK SIĘ LICZY', 'BĄDŹ DUMNY Z PRACY', 'SZUKAJ ROZWIĄZAŃ',
+    'CIERPLIWOŚĆ TO SIŁA', 'WSTAŃ I WALCZ', 'TWÓRZ PRZYSZŁOŚĆ',
+    'U MNIE DZIAŁA ¯\_(ツ)_/¯', 'KODUJ ALBO GIŃ', 'JESZCZE JEDEN COMMIT...',
+    'TO NIE BUG, TO FEATURE', 'KTOŚ TO TESTOWAŁ?', 'GIT PUSH -F I FAJRANT',
+    'CO MOŻE PÓJŚĆ NIE TAK?', 'MAMO, JESZCZE JEDNA FUNKCJA'
 ];
 
-const colors = ['#61afef', '#c678dd', '#98c379', '#e06c75', '#d19a66', '#56b6c2'];
+const colors = ['#ffffff', '#00d4ff', '#7000ff', '#aaaaaa', '#dddddd'];
 
-class CodeElement {
+class QuoteElement {
     constructor() {
-        this.reset();
+        this.reset([]);
     }
 
-    reset() {
-        this.x = Math.random() * width;
-        this.y = Math.random() * height;
-        // Random direction: most go down, some go up/sideways
-        const angle = Math.random() < 0.7 ? Math.PI / 2 + (Math.random() - 0.5) * 0.5 : Math.random() * Math.PI * 2;
-        const speed = Math.random() * 1.5 + 0.5;
-        this.vx = Math.cos(angle) * speed;
-        this.vy = Math.sin(angle) * speed;
-        this.textIdx = Math.floor(Math.random() * snippets.length);
+    reset(rects = []) {
+        let attempts = 0;
+        let validPos = false;
+
+        // Pick individual scale for each quote for depth
+        this.scale = 0.5 + Math.random() * 0.5;
+        this.quoteIdx = Math.floor(Math.random() * quotes.length);
         this.color = colors[Math.floor(Math.random() * colors.length)];
-        this.width = ctx.measureText(snippets[this.textIdx]).width;
-        this.height = fontSize;
-    }
 
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
+        ctx.font = `italic 600 ${fontSize}px 'Outfit', sans-serif`;
+        this.textWidth = ctx.measureText(quotes[this.quoteIdx]).width;
+        this.textHeight = fontSize;
 
-        if (this.x < -100 || this.x > width + 100 || this.y < -50 || this.y > height + 50) {
-            this.reset();
+        while (!validPos && attempts < 20) {
+            this.x = Math.random() * (width - this.textWidth);
+            this.y = Math.random() * (height - this.textHeight) + this.textHeight;
+
+            validPos = true;
+            for (const rect of rects) {
+                if (
+                    this.x + this.textWidth + 20 > rect.left &&
+                    this.x - 20 < rect.right &&
+                    this.y + 20 > rect.top &&
+                    this.y - this.textHeight - 20 < rect.bottom
+                ) {
+                    validPos = false;
+                    break;
+                }
+            }
+            attempts++;
         }
+
+        // DVD Screensaver style: constant slow speed
+        const speed = 0.4 + Math.random() * 0.4;
+        this.vx = (Math.random() < 0.5 ? 1 : -1) * speed;
+        this.vy = (Math.random() < 0.5 ? 1 : -1) * speed;
+    }
+
+    update(rects) {
+        let proposedX = this.x + this.vx;
+        let proposedY = this.y + this.vy;
+
+        // Bounce off screen edges
+        if (proposedX <= 5 || proposedX + this.textWidth >= width - 5) {
+            this.vx *= -1;
+            proposedX = this.x + this.vx;
+        }
+        if (proposedY - this.textHeight <= 5 || proposedY >= height - 5) {
+            this.vy *= -1;
+            proposedY = this.y + this.vy;
+        }
+
+        // Collision detection with floating boxes (HUD)
+        for (const rect of rects) {
+            if (
+                proposedX + this.textWidth > rect.left &&
+                proposedX < rect.right &&
+                proposedY > rect.top &&
+                proposedY - this.textHeight < rect.bottom
+            ) {
+                const prevX = this.x;
+                // Determine collision side
+                if (prevX + this.textWidth <= rect.left || prevX >= rect.right) {
+                    this.vx *= -1;
+                } else {
+                    this.vy *= -1;
+                }
+                this.x += this.vx * 2;
+                this.y += this.vy * 2;
+                return;
+            }
+        }
+
+        this.x = proposedX;
+        this.y = proposedY;
     }
 
     draw() {
+        ctx.font = `italic 600 ${fontSize}px 'Outfit', sans-serif`;
         ctx.fillStyle = this.color;
-        ctx.globalAlpha = 0.5;
-        ctx.fillText(snippets[this.textIdx], this.x, this.y);
-        ctx.globalAlpha = 1.0;
-    }
-}
-
-class Particle {
-    constructor(x, y, color) {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 3 + 1;
-        this.vx = Math.cos(angle) * speed;
-        this.vy = Math.sin(angle) * speed;
-        this.life = 1.0;
-        this.decay = Math.random() * 0.05 + 0.02;
-    }
-
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.life -= this.decay;
-    }
-
-    draw() {
-        ctx.fillStyle = this.color;
-        ctx.globalAlpha = this.life;
-        ctx.fillRect(this.x, this.y, 2, 2);
+        ctx.globalAlpha = 0.08 * this.scale; // Even more subtle
+        ctx.fillText(quotes[this.quoteIdx], this.x, this.y);
         ctx.globalAlpha = 1.0;
     }
 }
@@ -83,7 +114,7 @@ class Particle {
 function init() {
     resize();
     for (let i = 0; i < elementCount; i++) {
-        elements.push(new CodeElement());
+        elements.push(new QuoteElement());
     }
     animate();
 }
@@ -91,80 +122,53 @@ function init() {
 function resize() {
     width = canvas.width = window.innerWidth;
     height = canvas.height = window.innerHeight;
-    ctx.font = `${fontSize}px monospace`;
-}
-
-function createExplosion(x, y, color) {
-    for (let i = 0; i < 15; i++) {
-        explosions.push(new Particle(x, y, color));
-    }
-}
-
-function checkCollisions() {
-    for (let i = 0; i < elements.length; i++) {
-        for (let j = i + 1; j < elements.length; j++) {
-            const e1 = elements[i];
-            const e2 = elements[j];
-            const dx = e1.x - e2.x;
-            const dy = e1.y - e2.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < 30) {
-                createExplosion((e1.x + e2.x) / 2, (e1.y + e2.y) / 2, e1.color);
-                e1.reset();
-                e2.reset();
-            }
-        }
-    }
 }
 
 function animate() {
-    // Increased opacity for background fill to decrease trails (0.2 instead of 0.1)
-    ctx.fillStyle = 'rgba(5, 5, 5, 0.25)';
+    // Transparent trails to keep back.jpg visible
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.fillRect(0, 0, width, height);
+    ctx.globalCompositeOperation = 'source-over';
 
-    ctx.font = `${fontSize}px monospace`;
+    const obstacleRects = Array.from(document.querySelectorAll('.glass-card, .side-panel'))
+        .map(el => el.getBoundingClientRect());
 
     elements.forEach(el => {
-        el.update();
+        el.update(obstacleRects);
         el.draw();
     });
-
-    checkCollisions();
-
-    for (let i = explosions.length - 1; i >= 0; i--) {
-        const p = explosions[i];
-        p.update();
-        p.draw();
-        if (p.life <= 0) explosions.splice(i, 1);
-    }
 
     requestAnimationFrame(animate);
 }
 
 window.addEventListener('resize', resize);
-// Magnetic glow and subtle pulse effect for the main card
-const card = document.getElementById('main-card');
+
+const floatingElements = document.querySelectorAll('.glass-card, .side-panel');
+
 window.addEventListener('mousemove', (e) => {
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left; // x position within the element.
-    const y = e.clientY - rect.top;  // y position within the element.
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
 
-    // Calculate distance from center for subtle translation
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const moveX = (e.clientX - window.innerWidth / 2) / 50;
-    const moveY = (e.clientY - window.innerHeight / 2) / 50;
+    floatingElements.forEach((el, index) => {
+        const rect = el.getBoundingClientRect();
+        const xInside = mouseX - rect.left;
+        const yInside = mouseY - rect.top;
+        el.style.setProperty('--mouse-x', `${xInside}px`);
+        el.style.setProperty('--mouse-y', `${yInside}px`);
 
-    // Apply the magnetic effect: subtle move + custom property for CSS glow
-    card.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.01)`;
-    card.style.setProperty('--mouse-x', `${x}px`);
-    card.style.setProperty('--mouse-y', `${y}px`);
+        const depthFactor = index === 1 ? 50 : 80;
+        const moveX = (mouseX - window.innerWidth / 2) / depthFactor;
+        const moveY = (mouseY - window.innerHeight / 2) / depthFactor;
+
+        el.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.01)`;
+    });
 });
 
-// Reset effect when mouse leaves
 window.addEventListener('mouseleave', () => {
-    card.style.transform = `translate(0, 0) scale(1)`;
+    floatingElements.forEach(el => {
+        el.style.transform = `translate(0, 0) scale(1)`;
+    });
 });
 
 init();
