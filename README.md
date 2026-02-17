@@ -1,3 +1,3 @@
-### ZAGULA PRODUCTIONS ©
+### ZAGULA PRODUCTIONS
 
 https://zagula.dev
